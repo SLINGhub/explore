@@ -1,16 +1,13 @@
 ---
 title: "Coefficient Of Variation"
 output:
-  pdf_document: default
   html_document:
     df_print: paged
+  pdf_document: default
 ---
-```{r setup}
-knitr::opts_chunk$set(
-	message = FALSE,
-	warning = FALSE,
-	include = FALSE
-)
+
+```{r init}
+
 library(ggplot2)
 library(tibble)
 library(dplyr)
@@ -24,6 +21,9 @@ set.seed(18532)
 
 ### Simulating different CV levels
 
+Simulated normal distribution with $\mu = 100$ and $\sigma = 10, 20, 50, 75, 100, 150$.
+
+The vertical lines correspond to 1x, 2x and 3x SD of each CV level.
 
 ```{r cvsim, echo=FALSE, message=FALSE, warning=FALSE}
 df <- tibble(
@@ -51,11 +51,10 @@ ggplot(df, aes(x = order, y = value, color = z)) +
   stat_QC(
     method = "XmR",
     # specify QC charting method
-    auto.label = TRUE,
+    auto.label = FALSE,
     # Use Autolabels
     label.digits = 2, 
     size = 1,
-    # Use two digit in the label,
     show.1n2.sigma = T   # Show 1 and two sigma lines
     
   ) +
@@ -66,4 +65,3 @@ ggplot(df, aes(x = order, y = value, color = z)) +
   scale_x_continuous(expand =  expand_scale(mult = .15)) +
   theme(legend.position = "none")
 ```
-
