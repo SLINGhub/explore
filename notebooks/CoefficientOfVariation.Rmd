@@ -1,12 +1,21 @@
 ---
-title: "R Notebook"
-output: html_notebook
-    ---
+title: "Coefficient Of Variation"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
 ```{r setup}
+knitr::opts_chunk$set(
+	message = FALSE,
+	warning = FALSE,
+	include = FALSE
+)
 library(ggplot2)
 library(tibble)
 library(dplyr)
 library(tidyr)
+library(forcats)
 library(ggQC)
 
 set.seed(18532)
@@ -16,7 +25,7 @@ set.seed(18532)
 ### Simulating different CV levels
 
 
-```{r cvsim}
+```{r cvsim, echo=FALSE, message=FALSE, warning=FALSE}
 df <- tibble(
   order = rep(1:1000, 7),
   value = c(
@@ -39,20 +48,18 @@ df <- df %>% arrange(z)
 
 ggplot(df, aes(x = order, y = value, color = z)) +
   geom_point(size = 2, alpha = 0.5) +
-  scale_color_discrete() +
   stat_QC(
     method = "XmR",
     # specify QC charting method
-    auto.label = T,
+    auto.label = TRUE,
     # Use Autolabels
     label.digits = 2, 
-    label.size =.5,
     size = 1,
     # Use two digit in the label,
     show.1n2.sigma = T   # Show 1 and two sigma lines
     
   ) +
-  facet_grid( ~ z) +
+  facet_grid(~ z) +
   geom_hline(yintercept = 0, size = 2) +
   scale_colour_brewer(palette = "Dark2") +
   scale_y_continuous(breaks = c(-400, -300, -200, -100, 0, 100, 200, 300, 400, 500, 600)) +
