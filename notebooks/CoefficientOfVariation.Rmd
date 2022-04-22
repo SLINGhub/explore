@@ -1,0 +1,62 @@
+---
+title: "R Notebook"
+output: html_notebook
+    ---
+```{r setup}
+library(ggplot2)
+library(tibble)
+library(dplyr)
+library(tidyr)
+library(ggQC)
+
+set.seed(18532)
+
+```
+
+### Simulating different CV levels
+
+
+```{r cvsim}
+df <- tibble(
+  order = rep(1:1000, 7),
+  value = c(
+    rnorm(1000, mean = 100, sd = 10),
+    rnorm(1000, mean = 100, sd = 20),
+    rnorm(1000, mean = 100, sd = 30),
+    rnorm(1000, mean = 100, sd = 50),
+    rnorm(1000, mean = 100, sd = 75),
+    rnorm(1000, mean = 100, sd = 100),
+    rnorm(1000, mean = 100, sd = 150)
+  ),
+  z = rep(
+    c("10% CV", "20% CV", "30% CV", "50% CV", "75% CV", "100% CV", "150% CV"),
+    each = 1000
+  )
+)
+
+df$z <- as_factor(df$z)
+df <- df %>% arrange(z)
+
+ggplot(df, aes(x = order, y = value, color = z)) +
+  geom_point(size = 2, alpha = 0.5) +
+  scale_color_discrete() +
+  stat_QC(
+    method = "XmR",
+    # specify QC charting method
+    auto.label = T,
+    # Use Autolabels
+    label.digits = 2, 
+    label.size =.5,
+    size = 1,
+    # Use two digit in the label,
+    show.1n2.sigma = T   # Show 1 and two sigma lines
+    
+  ) +
+  facet_grid( ~ z) +
+  geom_hline(yintercept = 0, size = 2) +
+  scale_colour_brewer(palette = "Dark2") +
+  scale_y_continuous(breaks = c(-400, -300, -200, -100, 0, 100, 200, 300, 400, 500, 600)) +
+  scale_x_continuous(expand =  expand_scale(mult = .15)) +
+  theme(legend.position = "none")
+```
+
