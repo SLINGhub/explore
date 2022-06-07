@@ -27,9 +27,11 @@ The vertical lines correspond to 1x, 2x and 3x SD of each CV level.
 
 ```{r cvsim, echo=FALSE, message=FALSE, warning=FALSE}
 df <- tibble(
-  order = rep(1:1000, 7),
+  order = rep(1:1000, 9),
   value = c(
+    rnorm(1000, mean = 100, sd = 5),
     rnorm(1000, mean = 100, sd = 10),
+    rnorm(1000, mean = 100, sd = 15),
     rnorm(1000, mean = 100, sd = 20),
     rnorm(1000, mean = 100, sd = 30),
     rnorm(1000, mean = 100, sd = 50),
@@ -38,30 +40,104 @@ df <- tibble(
     rnorm(1000, mean = 100, sd = 150)
   ),
   z = rep(
-    c("10% CV", "20% CV", "30% CV", "50% CV", "75% CV", "100% CV", "150% CV"),
+    c("5% CV","10% CV", "15% CV", "20% CV", "30% CV", "50% CV", "75% CV", "100% CV", "150% CV"),
     each = 1000
   )
 )
 
-df$z <- as_factor(df$z)
-df <- df %>% arrange(z)
+#https://msalganik.wordpress.com/2017/01/21/making-sense-of-the-rlnorm-function-in-r/
+loc <-  function(m, s) log(m^2/sqrt(s^2+m^2))
+shape <- function(m, s) sqrt(log(1 + (s^2/m^2)))
 
-ggplot(df, aes(x = order, y = value, color = z)) +
-  geom_point(size = 2, alpha = 0.5) +
-  stat_QC(
-    method = "XmR",
-    # specify QC charting method
-    auto.label = FALSE,
-    # Use Autolabels
-    label.digits = 2, 
-    size = 1,
-    show.1n2.sigma = T   # Show 1 and two sigma lines
+df_lnorm <- tibble(
+  order = rep(1:1000, 9),
+  value = c(
+    rlnorm(1000, meanlog  = loc(100,5), sdlog  = shape(100,5)),
+    rlnorm(1000, meanlog  = loc(100,10),sdlog = shape(100,10)),
+    rlnorm(1000, meanlog  = loc(100,15), sdlog  = shape(100,15)),
+    rlnorm(1000, meanlog  = loc(100,20), sdlog  = shape(100,20)),
+    rlnorm(1000, meanlog  = loc(100,30), sdlog  = shape(100,30)),
+    rlnorm(1000, meanlog  = loc(100,50), sdlog  = shape(100,50)),
+    rlnorm(1000, meanlog  = loc(100,75), sdlog  = shape(100,75)),
+    rlnorm(1000, meanlog  = loc(100,100), sdlog  = shape(100,100)),
+    rlnorm(1000, meanlog  = loc(100,150), sdlog  = shape(100,150))
+  ),
+  z = rep(
+    c("5% CV","10% CV", "15% CV", "20% CV", "30% CV", "50% CV", "75% CV", "100% CV", "150% CV"),
+    each = 1000
+  )
+)
+
+
+plot_dist <- function(d){
+  d$z <- as_factor(d$z)
+  d <- d %>% arrange(z)
+  
+  ggplot(d, aes(x = order, y = value, color = z)) +
+    geom_point(size = .5, alpha = 0.5) +
+    stat_QC(
+      method = "XmR",
+      # specify QC charting method
+      auto.label = FALSE,
+      # Use Autolabels
+      label.digits = 2, 
+      #size = 1,
+      show.1n2.sigma = T   # Show 1 and two sigma lines
+      
+    ) +
+    facet_grid(~ z) +
+    geom_hline(yintercept = 0, size = 2) +
+    #scale_colour_brewer(palette = "Dark2") +
     
-  ) +
-  facet_grid(~ z) +
-  geom_hline(yintercept = 0, size = 2) +
-  scale_colour_brewer(palette = "Dark2") +
-  scale_y_continuous(breaks = c(-400, -300, -200, -100, 0, 100, 200, 300, 400, 500, 600)) +
-  scale_x_continuous(expand =  expand_scale(mult = .15)) +
-  theme(legend.position = "none")
+    scale_y_continuous(breaks = c(-400, -300, -200, -100, 0, 100, 200, 300, 400, 500, 600), limits = c(-400, 600)) +
+    scale_x_continuous(expand =  expansion(mult = .15)) +
+    theme(legend.position = "none")
+}
 ```
+
+```{r}
+plot_dist(df)
+```
+
+```{r}
+plot_dist(df_lnorm)
+```
+
+
+```{r}
+
+df[df$z == "5% CV",]$value |> quantile(c(0.10,.90))
+df[df$z == "5% CV",]$value |> quantile(c(0.01,.99))
+
+df[df$z == "15% CV",]$value |> quantile(c(0.10,.90))
+df[df$z == "15% CV",]$value |> quantile(c(0.01,.99))
+
+df[df$z == "30% CV",]$value |> quantile(c(0.10,.90))
+df[df$z == "50% CV",]$value |> quantile(c(0.01,.99))
+
+library(SLINGtools)
+SLINGtools::cvlog(df[df$z == "20% CV",]$value, na.rm = TRUE)
+SLINGtools::cvlog(df[df$z == "5% CV",]$value, na.rm = TRUE)
+SLINGtools::cvlog(df[df$z == "30% CV",]$value, na.rm = TRUE)
+
+```
+```{r}
+#https://msalganik.wordpress.com/2017/01/21/making-sense-of-the-rlnorm-function-in-r/ 
+
+m <- 100
+s <- 30
+
+loc <-  log(m^2/sqrt(s^2+m^2))
+shape <- sqrt(log(1 + (s^2/m^2))) 
+
+d <- rlnorm(10000, loc, shape)
+
+hist(d)
+sd(d)/mean(d)
+
+SLINGtools::cvlog(d, na.rm = TRUE)/100
+
+hist(log(d), bins = 15)
+ 
+```
+
